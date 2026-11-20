@@ -1,4 +1,4 @@
-FROM quay.io/fedora-ostree-desktops/xfce:45
+FROM quay.io/fedora-ostree-desktops/xfce-atomic:45
 
 # 1. Bake nomodeset into bootc kernel arguments for HP ProBook 455 G7 (locked PSP)
 RUN mkdir -p /usr/lib/bootc/kargs.d && \
