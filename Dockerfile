@@ -1,16 +1,11 @@
 FROM quay.io/fedora-ostree-desktops/xfce-atomic:45
 
 RUN set -euxo pipefail && \
-    # 1. Bake nomodeset into bootc kernel arguments
     mkdir -p /usr/lib/bootc/kargs.d && \
     printf 'kargs = ["nomodeset"]\n' > /usr/lib/bootc/kargs.d/10-hp-probook.toml && \
-    \
-    # 2. Add official Microsoft VS Code & Docker CE repositories (Hinweis: URLs korrigiert!)
     rpm --import https://microsoft.com && \
     printf "[code]\nname=Visual Studio Code\nbaseurl=https://microsoft.com\nenabled=1\ngpgcheck=1\ngpgkey=https://microsoft.com\n" > /etc/yum.repos.d/vscode.repo && \
     curl -fsSL https://docker.com -o /etc/yum.repos.d/docker-ce.repo && \
-    \
-    # 3. Install packages
     dnf install -y \
         code \
         docker-ce \
@@ -28,12 +23,8 @@ RUN set -euxo pipefail && \
         zsh-syntax-highlighting \
         util-linux-user && \
     dnf clean all && \
-    \
-    # 4. Disable rootful Docker daemon
     systemctl disable docker.service docker.socket || true && \
-    \
-    # 5. Pre-configure system-wide Zsh defaults
-    cat <<'EOF' >> /etc/zshrc
+    cat <<'EOF' >> /etc/zshrc && \
 
 # Rootless Docker socket configuration
 if [ -n "$XDG_RUNTIME_DIR" ]; then
@@ -44,8 +35,6 @@ fi
 [ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 [ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 EOF
-    \
-    # 6. Bake idempotent user setup script
     cat <<'EOF' > /usr/bin/setup-user-env && \
 #!/usr/bin/env bash
 set -euo pipefail
@@ -68,8 +57,6 @@ fi
 touch "$STAMP_FILE"
 EOF
     chmod +x /usr/bin/setup-user-env && \
-    \
-    # 7. Create & globally enable systemd user unit
     cat <<'EOF' > /usr/lib/systemd/user/setup-user-env.service && \
 [Unit]
 Description=One-time user environment setup (Rootless Docker & Zsh)
